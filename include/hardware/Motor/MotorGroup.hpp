@@ -506,6 +506,8 @@ class MotorGroup : public Encoder {
          * @endcode
          */
         void removeMotor(Motor motor);
+
+        AngularVelocity MotorGroup::getActualVelocity() const;
     private:
         struct MotorInfo {
                 ReversibleSmartPort port;
