@@ -181,6 +181,28 @@ AngularVelocity MotorGroup::getOutputVelocity() const {
     return m_outputVelocity;
 }
 
+AngularVelocity MotorGroup::getActualVelocity() const {
+    std::lock_guard lock(m_mutex);
+    const std::vector<Motor> motors = getMotors();
+    // get the average angle of all motors in the group
+    AngularVelocity av = 0_rpm;
+    int errors = 0;
+    for (Motor motor : motors) {
+        // get angle
+        const AngularVelocity result = motor.getActualVelocity();
+        if (result == from_rpm(INFINITY)) {
+            errors++;
+            continue;
+        };
+        // add to sum
+        av += result;
+    }
+    // if no motors are connected, return INFINITY
+    if (errors == motors.size()) return from_rpm(INFINITY);
+    // otherwise, return the average angle
+    return av / (motors.size() - errors);
+}
+
 int32_t MotorGroup::getSize() const {
     std::lock_guard lock(m_mutex);
     const std::vector<Motor> motors = getMotors();
