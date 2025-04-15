@@ -214,4 +214,29 @@ AngularVelocity Motor::getOutputVelocity() const {
     std::lock_guard lock(m_mutex);
     return m_outputVelocity;
 }
+
+AngularVelocity Motor::getActualVelocity() const {
+    std::lock_guard lock(m_mutex);
+    const double v = pros::c::motor_get_actual_velocity(m_port);
+    if (v == PROS_ERR_F) return from_rpm(INFINITY);
+    const pros::motor_gearset_e_t mode = pros::c::motor_get_gearing(m_port);
+    AngularVelocity cartridgeSpeed = 0_rpm;
+    switch (mode) {
+        case (pros::E_MOTOR_GEARSET_06): {
+            cartridgeSpeed = 600_rpm;
+            break;
+        }
+        case (pros::E_MOTOR_GEARSET_18): {
+            cartridgeSpeed = 200_rpm;
+            break;
+        }
+        case (pros::E_MOTOR_GEARSET_36): {
+            cartridgeSpeed = 100_rpm;
+            break;
+        }
+        default: return from_rpm(INFINITY);
+    }
+
+    return from_rpm(v) * (m_outputVelocity / cartridgeSpeed);
+}
 } // namespace lemlib
